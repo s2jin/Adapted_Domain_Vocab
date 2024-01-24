@@ -1,0 +1,15 @@
+python main.py \
+	--task term-type \
+	-a accuracy \
+	-m bert-classifier \
+	--label_path data/label_type_list.txt \
+	-ms 256 \
+	-b 64 \
+	-tk klue/bert-base \
+	-td data/training.jsonl \
+	-vd data/valid.jsonl \
+	-w klue/bert-base \
+	-lr 1e-5 \
+	--warmup --warmup_patience 2 \
+	-ntk extend_vocabs/term-cls/bert_pos_20k \
+	-s checkpoint/
