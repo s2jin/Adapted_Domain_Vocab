@@ -283,6 +283,7 @@ class Trainer():
 
         if self.args.set_extend_token:
             from make_extension_token import get_extend_tokenizer
+            if not self.args.tk_dataset: self.args.tk_dataset = self.args.training_dataset
             tokenizer_path, extend_tokenizer = get_extend_tokenizer(self.args.tk_dataset, base_tokenizer, 
                     vocab_size=self.args.tk_vocab_size, 
                     min_frequency=self.args.tk_min_frequency, 

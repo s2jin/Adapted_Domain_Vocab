@@ -10,6 +10,7 @@ python main.py \
 	-vd data/valid.jsonl \
 	-w klue/bert-base \
 	-lr 1e-5 \
-	--warmup --warmup_patience 2 \
-	-ntk extend_vocabs/term-cls/bert_pos_20k \
-	-s checkpoint/
+	-s checkpoint/ \
+	--set_extend_token \
+	--warmup --warmup_patience 0 \
+	-ntk extend_vocabs/klue-bert-base-pos_20000_287/ \
