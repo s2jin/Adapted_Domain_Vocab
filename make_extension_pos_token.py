@@ -6,7 +6,6 @@ from tqdm import tqdm
 import pandas as pd
 import transformers
 import tokenizers
-from models.tokenizer import tokenization_korscibert
 
 from argparse import ArgumentParser
 
@@ -21,13 +20,12 @@ def parse_args():
 
     parser.add_argument('-s', '--save_path', default=None, type=str, required=False)
 
-    parser.add_argument('-v', '--vocab_size', default=20000, type=int, required=True)
+    parser.add_argument('-v', '--vocab_size', default=20000, type=int, required=False)
     parser.add_argument('-mf', '--min_frequency', default=2, type=int, required=False)
 
     args = parser.parse_args()
 
-    if 'korscibert' in args.tokenizer: args.tokenizer_type = 'korscibert' 
-    elif 'electra' in args.tokenizer: args.tokenizer_type = 'electra'
+    if 'electra' in args.tokenizer: args.tokenizer_type = 'electra'
     elif 'bert' in args.tokenizer: args.tokenizer_type = 'bert'
     elif 't5' in args.tokenizer: 
         raise NotImplementedError('T5 tokenizer is not supported yet.')
@@ -69,8 +67,7 @@ def get_extend_tokenizer(train_data, base_tokenizer, vocab_size=20000, min_frequ
         pass
 
     ## set tokenizer_type
-    if 'korscibert' in tokenizer_name: tokenizer_type = 'korscibert' 
-    elif 'electra' in tokenizer_name: tokenizer_type = 'electra'
+    if 'electra' in tokenizer_name: tokenizer_type = 'electra'
     elif 'bert' in tokenizer_name: tokenizer_type = 'bert'
     elif 't5' in tokenizer_name: 
         raise NotImplementedError('T5 tokenizer is not supported yet.')
@@ -93,9 +90,7 @@ def get_extend_tokenizer(train_data, base_tokenizer, vocab_size=20000, min_frequ
 
 
 def save_extended_tokenizer(base_tokenizer, new_vocab, outputfilename, tokenizer_type='bert'):
-    if 'korscibert' in tokenizer_type: return save_extended_korscibert_tokenizer(base_tokenizer, new_vocab, outputfilename)
-    elif 'korscielectra' in tokenizer_type: return save_extended_korscibert_tokenizer(base_tokenizer, new_vocab, outputfilename)
-    elif 'electra' in tokenizer_type: return save_extended_electra_tokenizer(base_tokenizer, new_vocab, outputfilename)
+    if 'electra' in tokenizer_type: return save_extended_electra_tokenizer(base_tokenizer, new_vocab, outputfilename)
     elif 'bert' in tokenizer_type: return save_extended_bert_tokenizer(base_tokenizer, new_vocab, outputfilename)
     else: raise NotImplementedError('No tokenizer setting for {}.'.format(tokenizer_type))
 
@@ -110,14 +105,6 @@ def save_extended_bert_tokenizer(base_tokenizer, new_vocab, outputfilename):
 def save_extended_electra_tokenizer(base_tokenizer, new_vocab, outputfilename):
     base_tokenizer.save_pretrained(outputfilename)
     base_vocab = list(base_tokenizer.vocab)
-    with open(f"{outputfilename}/vocab.txt",'w') as f:
-        f.write('\n'.join(base_vocab+new_vocab))
-    extend_tokenizer, extend_vocab = get_tokenizer(outputfilename)
-    return outputfilename, extend_tokenizer
-
-def save_extended_korscibert_tokenizer(base_tokenizer, new_vocab, outputfilename):
-    base_vocab = list(base_tokenizer.vocab)
-    os.makedirs(f'{outputfilename}', exist_ok=True)
     with open(f"{outputfilename}/vocab.txt",'w') as f:
         f.write('\n'.join(base_vocab+new_vocab))
     extend_tokenizer, extend_vocab = get_tokenizer(outputfilename)
@@ -208,8 +195,7 @@ def load_data(filename):
             return data
 
 def clean_subword_identifier(tokenizer_path, vocabs):
-    if 'korscibert' in tokenizer_path: return vocabs
-    elif 'electra' in tokenizer_path: return vocabs
+    if 'electra' in tokenizer_path: return vocabs
     elif 'bert' in tokenizer_path: return vocabs
     elif 't5' in tokenizer_path:
         whitespace = '▁'
@@ -223,27 +209,10 @@ def clean_subword_identifier(tokenizer_path, vocabs):
     else: raise NotImplementedError('No tokenizer setting for {}.'.format(tokenizer_path))
 
 def get_tokenizer(tokenizer_path):
-    if 'korscibert' in tokenizer_path: return get_korscibert_tokenizer(tokenizer_path)
-    elif 'korscielectra' in tokenizer_path: return get_korscielectra_tokenizer(tokenizer_path)
-    elif 'electra' in tokenizer_path: return get_electra_tokenizer(tokenizer_path)
+    if 'electra' in tokenizer_path: return get_electra_tokenizer(tokenizer_path)
     elif 'bert' in tokenizer_path: return get_bert_tokenizer(tokenizer_path)
     elif 't5' in tokenizer_path: return get_t5_tokenizer(tokenizer_path)
     else: raise NotImplementedError('No tokenizer setting for {}.'.format(tokenizer_path))
-
-def get_korscibert_tokenizer(path):
-    from models.tokenizer import tokenization_korscibert
-    tokenizer = tokenization_korscibert.FullTokenizer(
-            vocab_file=path,
-            do_lower_case=False,
-            tokenizer_type="Mecab"
-    )
-    tokenizer.mask_token = '[MASK]'
-    tokenizer.mask_token_id = tokenizer.vocab[tokenizer.mask_token]
-    tokenizer.unk_token = '[UNK]'
-    tokenizer.unk_token_id = tokenizer.vocab[tokenizer.unk_token]
-    tokenizer.pad_token = '[PAD]'
-    tokenizer.pad_token_id = tokenizer.vocab[tokenizer.pad_token]
-    return tokenizer, list(tokenizer.vocab)
 
 def get_bert_tokenizer(path):
     tokenizer = transformers.BertTokenizer.from_pretrained(path)
@@ -255,10 +224,6 @@ def get_t5_tokenizer(path):
 
 def get_electra_tokenizer(path):
     tokenizer = transformers.ElectraTokenizer.from_pretrained(path)
-    return tokenizer, list(tokenizer.get_vocab())
-
-def get_korscielectra_tokenizer(path):
-    tokenizer = transformers.BertTokenizer(path, do_lower_case=False)
     return tokenizer, list(tokenizer.get_vocab())
 
 
